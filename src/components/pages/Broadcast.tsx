@@ -4,11 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '@/lib/api';
 import { 
-  Card, 
-  CardBody, 
   Button, 
   Input, 
-  Textarea, 
   Divider,
   RadioGroup,
   Radio,
@@ -16,13 +13,24 @@ import {
   AutocompleteItem,
   Avatar,
   Chip,
+  Tabs,
+  Tab,
+  Tooltip,
+  Spinner,
+  Textarea as TextArea,
 } from '@heroui/react';
+import { toast } from "sonner";
+
+const Label = ({ children, className = "" }) => (
+  <label className={`text-sm font-semibold text-gray-700 mb-1 block ${className}`}>
+    {children}
+  </label>
+);
 import { 
   Send, 
   AlertTriangle, 
   CheckCircle2,
   Terminal,
-  UserCheck,
   Signal,
   Radio as RadioIcon,
   Fingerprint,
@@ -30,7 +38,21 @@ import {
   MessageSquare,
   ShieldAlert,
   Hash,
-  History as HistoryIcon
+  History as HistoryIcon,
+  Users,
+  Target,
+  Mail,
+  Activity,
+  Shield,
+  Lock,
+  Eye,
+  Layers,
+  Database,
+  ChevronRight,
+  User,
+  AtSign,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import { EliteCard } from '@/components/ui/elite-card';
 import { useAuth } from '@/contexts/auth-context';
@@ -41,12 +63,13 @@ const Broadcast = () => {
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
+  const [activeTab, setActiveTab] = useState('compose');
 
-  // Safe String Logic
   const safeText = (text) => {
     if (!text) return "";
     if (typeof text === 'string') return text;
@@ -75,20 +98,23 @@ const Broadcast = () => {
     }
   };
 
+  const handleUserSelect = (key) => {
+    setSelectedUserId(key);
+    const user = users.find(u => u.id === key);
+    setSelectedUser(user);
+  };
+
   const handleSend = async () => {
-    if (!subject || !message) {
-      setStatus({ success: false, message: 'Required fields are missing: Please enter a subject and message.' });
+    if (!subject.trim() || !message.trim()) {
+      toast.error('Identity required: Subject and Message body must be populated.');
       return;
     }
     if (targetType === 'individual' && !selectedUserId) {
-      setStatus({ success: false, message: 'No recipient selected: Please identify a target user.' });
+      toast.error('Node targeting error: Recipient identity must be established.');
       return;
     }
     
-    setLoading(true);
-    setStatus(null);
-    
-    try {
+    const sendPromise = (async () => {
       let response;
       if (targetType === 'all') {
         response = await adminApi.broadcast({ subject, message });
@@ -100,304 +126,439 @@ const Broadcast = () => {
         });
       }
       
-      setStatus({ 
-        success: true, 
-        message: response.data.message || 'Transmission Successful: Your message has been dispatched.' 
-      });
+      // Clear form after successful send
       setSubject('');
       setMessage('');
-      if (targetType !== 'all') setSelectedUserId('');
-    } catch (error) {
-      setStatus({ 
-        success: false, 
-        message: error.response?.data?.detail || 'Delivery Failed: Could not establish a connection to the mail server.' 
-      });
-    } finally {
-      setLoading(false);
-    }
+      if (targetType !== 'all') {
+        setSelectedUserId('');
+        setSelectedUser(null);
+      }
+      return response;
+    })();
+
+    toast.promise(sendPromise, {
+      loading: "Establishing secure transmission uplink...",
+      success: "Message broadcast successfully dispatched.",
+      error: (err) => err.response?.data?.detail || "Transmission uplink failure.",
+    });
   };
 
+  // Access Denied Page
   if (currentUser && currentUser.access_right === 'Standard') {
     return (
-      <div className="p-12 sm:p-20 text-center admin-page-muted space-y-12">
-        <EliteCard className="max-w-2xl mx-auto py-20 border-danger/30 bg-danger/5 backdrop-blur-3xl relative overflow-hidden rounded-[3rem]">
-          <div className="absolute inset-0 bg-gradient-to-b from-danger/10 to-transparent pointer-events-none"></div>
-          <div className="w-24 h-24 bg-danger/20 text-danger rounded-[2rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-danger/20 border-2 border-danger/30 relative z-10">
-            <ShieldAlert size={48} strokeWidth={2.5} className="animate-pulse" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ShieldAlert size={40} className="text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h2>
+            <p className="text-gray-600 mb-6">You don't have permission to access this feature.</p>
+            <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2">
+              <div className="flex items-center gap-2 text-sm text-gray-700">
+                <Lock size={14} className="text-red-500" />
+                <span>Requires Elevated or Supreme access level</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-700">
+                <Terminal size={14} className="text-red-500" />
+                <span>Contact your system administrator</span>
+              </div>
+            </div>
           </div>
-          <h2 className="text-4xl font-black uppercase italic tracking-tighter text-default-900 leading-none relative z-10">Restricted Access</h2>
-          <p className="text-[11px] font-black text-danger uppercase tracking-[0.5em] mt-6 relative z-10 animate-pulse">Insufficient Administrative Clearance</p>
-          <div className="mt-12 p-8 bg-background/50 rounded-3xl border border-divider/20 text-left max-w-sm mx-auto relative z-10">
-            <p className="text-[10px] font-bold text-default-400 uppercase leading-relaxed tracking-wider text-center">
-               Global broadcasting is restricted to <strong>Elevated</strong> or <strong>Supreme</strong> administrative accounts. Contact your system lead for access.
-            </p>
-          </div>
-        </EliteCard>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="admin-page space-y-10">
-      {/* Dynamic Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="absolute -inset-2 bg-primary/20 blur-lg rounded-lg animate-pulse"></div>
-              <div className="relative p-3 bg-primary text-white rounded-2xl shadow-2xl shadow-primary/40">
-                <RadioIcon size={24} strokeWidth={2.5} />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.5em] leading-none mb-1">Broadcast Hub</span>
-              <div className="flex items-center gap-2">
-                <Signal size={12} className="text-success" />
-                <span className="text-[9px] font-black text-success uppercase tracking-widest">Active Link Established</span>
-              </div>
-            </div>
-          </div>
-          <h1 className="text-6xl font-black tracking-tight uppercase text-default-900 italic leading-none">
-            Broadcast<span className="text-primary not-italic">_Center</span>
-          </h1>
-          <p className="text-default-400 font-bold text-xs max-w-lg leading-relaxed uppercase tracking-wider">
-            Enterprise-grade communication uplink. <br/>
-            Deploying <span className="text-primary">Platform-wide</span> or <span className="text-secondary">Targeted</span> notifications.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
         
-        <div className="flex items-center gap-4 bg-default-100/50 backdrop-blur-xl p-3 rounded-2xl border border-divider/20">
-          <div className="flex items-center gap-2 px-4 py-2 bg-success/10 rounded-full border border-success/20">
-             <div className="w-1.5 h-1.5 rounded-full bg-success animate-ping"></div>
-             <span className="text-[9px] font-black text-success uppercase tracking-widest">System Green</span>
-          </div>
-          <Divider orientation="vertical" className="h-8 mx-1" />
-          <Button 
-            isIconOnly 
-            variant="flat" 
-            className="h-14 w-14 rounded-2xl bg-background border border-divider shadow-xl text-primary"
-          >
-            <HistoryIcon size={20} />
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Settings Panel HUD */}
-        <div className="lg:col-span-4">
-          <EliteCard className="h-full border-divider/30 bg-background/20 backdrop-blur-2xl rounded-[3rem]">
-            <div className="space-y-10">
-              <div className="flex items-center gap-4 text-primary">
-                <div className="p-3 bg-primary/10 rounded-2xl shadow-inner border border-primary/20">
-                  <Fingerprint size={24} />
+        {/* Page Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-600 rounded-xl">
+              <RadioIcon size={20} className="text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Broadcast Center</span>
+                <Chip size="sm" variant="flat" color="success" className="text-[10px] font-semibold">
+                  v3.0
+                </Chip>
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                  <span className="text-xs text-gray-600">System Online</span>
                 </div>
-                <div>
-                  <h3 className="text-xl font-black uppercase italic tracking-tighter">Recipient Info</h3>
-                  <p className="text-[9px] font-black text-default-400 uppercase tracking-widest leading-none mt-1">Configure Target Parameters</p>
+                <div className="flex items-center gap-1.5">
+                  <Signal size={12} className="text-gray-400" />
+                  <span className="text-xs text-gray-600">Secure Channel</span>
                 </div>
               </div>
+            </div>
+          </div>
+          
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Message Broadcast</h1>
+          <p className="text-gray-600">Send system-wide announcements or targeted messages to individual users.</p>
+        </div>
 
-              <RadioGroup
-                value={targetType}
-                onValueChange={setTargetType}
-                classNames={{
-                  wrapper: "gap-4"
-                }}
-              >
-                <div 
-                  className={`relative p-6 rounded-[2rem] border-2 cursor-pointer transition-all duration-500 group
-                    ${targetType === 'all' ? 'border-primary bg-primary/[0.03] shadow-2xl shadow-primary/20' : 'border-divider/30 bg-default-50/20 hover:border-divider'}`} 
-                  onClick={() => setTargetType('all')}
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left Panel - Configuration */}
+          <div className="lg:col-span-4">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden sticky top-8">
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <Fingerprint size={18} className="text-blue-600" />
+                  <h2 className="font-semibold text-gray-900">Transmission Settings</h2>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Configure your broadcast parameters</p>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Target Selection */}
+                <RadioGroup
+                  value={targetType}
+                  onValueChange={setTargetType}
+                  className="space-y-3"
                 >
-                  <div className="flex items-start gap-4">
-                    <Radio value="all" className="mt-1" />
-                    <div className="flex flex-col">
-                      <p className="text-sm font-black uppercase italic tracking-tighter text-default-900 group-hover:text-primary transition-colors">Broadcast All</p>
-                      <p className="text-[10px] text-default-400 font-bold uppercase tracking-widest mt-1">Send to entire database</p>
+                  <div 
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      targetType === 'all' 
+                        ? 'border-blue-500 bg-blue-50/50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => setTargetType('all')}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Radio value="all" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-gray-900">Global Broadcast</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Send to all users in the system</p>
+                          </div>
+                          <Globe size={18} className={targetType === 'all' ? 'text-blue-500' : 'text-gray-400'} />
+                        </div>
+                        {targetType === 'all' && (
+                          <div className="mt-2 flex items-center gap-2 text-xs text-blue-600">
+                            <ChevronRight size={12} />
+                            <span>Will reach all active users</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-                    <Globe size={20} className={targetType === 'all' ? 'text-primary' : 'text-default-400'} />
-                  </div>
-                </div>
 
-                <div 
-                  className={`relative p-6 rounded-[2rem] border-2 cursor-pointer transition-all duration-500 group
-                    ${targetType === 'individual' ? 'border-secondary bg-secondary/[0.03] shadow-2xl shadow-secondary/20' : 'border-divider/30 bg-default-50/20 hover:border-divider'}`} 
-                  onClick={() => setTargetType('individual')}
-                >
-                  <div className="flex items-start gap-4">
-                    <Radio value="individual" color="secondary" className="mt-1" />
-                    <div className="flex flex-col">
-                      <p className="text-sm font-black uppercase italic tracking-tighter text-default-900 group-hover:text-secondary transition-colors">Specific User</p>
-                      <p className="text-[10px] text-default-400 font-bold uppercase tracking-widest mt-1">Direct individual alert</p>
+                  <div 
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      targetType === 'individual' 
+                        ? 'border-purple-500 bg-purple-50/50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => setTargetType('individual')}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Radio value="individual" color="secondary" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-gray-900">Individual Message</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Send to a specific user</p>
+                          </div>
+                          <Target size={18} className={targetType === 'individual' ? 'text-purple-500' : 'text-gray-400'} />
+                        </div>
+                        {targetType === 'individual' && (
+                          <div className="mt-2 flex items-center gap-2 text-xs text-purple-600">
+                            <ChevronRight size={12} />
+                            <span>Select a recipient below</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-                    <UserCheck size={20} className={targetType === 'individual' ? 'text-secondary' : 'text-default-400'} />
-                  </div>
-                </div>
-              </RadioGroup>
+                </RadioGroup>
 
-              {targetType === 'individual' && (
-                <div className="space-y-6 pt-4">
-                    <div className="relative">
+                {/* User Selection */}
+                {targetType === 'individual' && (
+                  <div className="space-y-3">
+                    <Divider />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Recipient
+                      </label>
                       <Autocomplete
-                        label="Recipient Selection"
-                        labelPlacement="outside"
-                        variant="flat"
-                        radius="2xl"
                         placeholder="Search by name or email..."
-                        onSelectionChange={(key) => setSelectedUserId(key)}
+                        onSelectionChange={handleUserSelect}
                         isLoading={loadingUsers}
                         items={users}
+                        startContent={<Users size={14} className="text-gray-400" />}
                         classNames={{
-                          base: "w-full",
-                          listbox: "bg-background/90 backdrop-blur-2xl border-1 border-divider rounded-[2rem] p-4",
-                          popoverContent: "rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] bg-transparent",
-                          trigger: "bg-default-100/50 h-16 border-2 border-divider/40 focus-within:border-secondary transition-all px-6",
-                          label: "font-black uppercase tracking-widest text-[10px] text-default-400 mb-2 ml-2"
+                          trigger: "h-12 bg-gray-50 border border-gray-200 rounded-xl",
+                          input: "text-sm",
+                          listbox: "rounded-xl border border-gray-200",
                         }}
                       >
                         {(user) => (
                           <AutocompleteItem 
                             key={user.id} 
                             textValue={safeText(user.email)}
-                            className="rounded-2xl py-4 hover:bg-secondary/10"
                           >
-                            <div className="flex items-center gap-4">
-                              <Avatar size="md" className="border-2 border-secondary/20" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} />
+                            <div className="flex items-center gap-3 py-1">
+                              <Avatar size="sm" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} />
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold tracking-tight text-default-900">{safeText(user.full_name || user.username)}</span>
-                                <span className="text-[10px] font-medium text-default-400 uppercase tracking-widest">{safeText(user.email)}</span>
+                                <span className="text-sm font-medium">{safeText(user.full_name || user.username)}</span>
+                                <span className="text-xs text-gray-500">{safeText(user.email)}</span>
                               </div>
                             </div>
                           </AutocompleteItem>
                         )}
                       </Autocomplete>
+                      
+                      {selectedUser && (
+                        <div className="mt-3 p-3 bg-purple-50 rounded-xl border border-purple-200">
+                          <div className="flex items-center gap-2 text-sm text-purple-700">
+                            <User size={14} />
+                            <span className="font-medium">Selected:</span>
+                            <span>{safeText(selectedUser.full_name || selectedUser.username)}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                </div>
-              )}
+                  </div>
+                )}
 
-              <Divider className="opacity-10" />
-
-              <div className="flex items-start gap-5 p-6 bg-primary/5 border-1 border-primary/20 rounded-3xl">
-                <AlertTriangle size={20} className="text-primary shrink-0" />
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary leading-none">Security Note</p>
-                  <p className="text-[10px] text-primary/70 font-bold leading-relaxed uppercase tracking-tight italic">
-                    Messages are sent officially from the platform. Delivery is subject to SMTP throughput.
-                  </p>
+                {/* Info Cards */}
+                <div className="space-y-3 pt-4">
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="flex items-start gap-3">
+                      <Shield size={16} className="text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-medium text-gray-900">Encryption</p>
+                        <p className="text-xs text-gray-500 mt-1">All messages are encrypted with AES-256 and sent over TLS 1.3</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-gray-50 rounded-xl text-center">
+                      <Mail size={16} className="text-blue-600 mx-auto mb-1" />
+                      <p className="text-[10px] font-medium text-gray-500 uppercase">Total Sent</p>
+                      <p className="text-xl font-bold text-gray-900">2,847</p>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-xl text-center">
+                      <Activity size={16} className="text-green-600 mx-auto mb-1" />
+                      <p className="text-[10px] font-medium text-gray-500 uppercase">Success Rate</p>
+                      <p className="text-xl font-bold text-green-600">99.8%</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </EliteCard>
-        </div>
+          </div>
 
-        {/* Compose Panel HUD */}
-        <div className="lg:col-span-8">
-          <EliteCard 
-            className="h-full border-none bg-background/30 backdrop-blur-3xl transition-all duration-500 shadow-2xl overflow-hidden rounded-[2.5rem]"
-          >
-            <div className="flex flex-col h-full">
-              {/* Cinematic Compose Header */}
-              <div className="p-8 sm:p-10 border-b border-divider/10 bg-default-50/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                 <div className="flex items-center gap-6">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white shadow-2xl shadow-primary/30">
-                      <MessageSquare size={28} strokeWidth={2.5} />
+          {/* Right Panel - Message Composer */}
+          <div className="lg:col-span-8">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              
+              {/* Tabs */}
+              <div className="border-b border-gray-200 bg-gray-50/50">
+                <Tabs 
+                  selectedKey={activeTab}
+                  onSelectionChange={setActiveTab}
+                  variant="underlined"
+                  classNames={{
+                    tabList: "gap-1 px-6 pt-2",
+                    tab: "h-10",
+                    tabContent: "group-data-[selected=true]:text-blue-600 text-gray-600 text-sm font-medium"
+                  }}
+                >
+                  <Tab key="compose" title={
+                    <div className="flex items-center gap-2">
+                      <FileText size={14} />
+                      <span>Compose</span>
                     </div>
-                    <div className="flex flex-col">
-                      <h2 className="text-2xl font-black uppercase italic tracking-tighter text-default-900 leading-none">Message Composer</h2>
-                      <p className="text-[10px] font-black text-default-400 uppercase tracking-widest mt-1">Prepare high-priority system dispatch</p>
+                  } />
+                  <Tab key="preview" title={
+                    <div className="flex items-center gap-2">
+                      <Eye size={14} />
+                      <span>Preview</span>
                     </div>
-                 </div>
-                 <Chip 
-                   variant="flat" 
-                   color="primary" 
-                   className="font-black uppercase text-[9px] tracking-widest px-4 h-8 bg-primary/10"
-                   startContent={<Terminal size={12} />}
-                 >
-                   PLATFORM_CERTIFIED
-                 </Chip>
+                  } />
+                  <Tab key="templates" title={
+                    <div className="flex items-center gap-2">
+                      <Layers size={14} />
+                      <span>Templates</span>
+                    </div>
+                  } />
+                </Tabs>
               </div>
 
-              {/* Compose Body */}
-              <div className="p-8 sm:p-10 flex-1 overflow-y-auto scrollbar-hide">
-                 <div className="flex flex-col gap-10">
-                    <div className="relative group/subject">
+              <div className="p-6">
+                {activeTab === 'compose' && (
+                  <div className="space-y-6">
+                    {/* Subject Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Subject Line
+                      </label>
                       <Input
-                        label="Message Subject"
-                        labelPlacement="outside"
-                        placeholder="Enter a descriptive subject line"
-                        variant="flat"
-                        radius="2xl"
-                        size="lg"
+                        placeholder="e.g., System Maintenance Notice, Security Update, etc."
                         value={subject}
                         onValueChange={setSubject}
+                        startContent={<Hash size={16} className="text-gray-400" />}
                         classNames={{
-                          inputWrapper: "h-20 bg-default-100/60 dark:bg-default-100/10 border-2 border-divider/40 px-8 data-[hover=true]:border-primary focus-within:!border-primary transition-all duration-500 shadow-xl",
-                          input: "text-lg font-bold tracking-tight text-default-900 placeholder:text-default-300",
-                          label: "font-black uppercase tracking-[0.4em] text-[10px] text-primary mb-3 ml-2"
+                          inputWrapper: "h-12 bg-gray-50 border border-gray-200 rounded-xl focus-within:border-blue-400",
+                          input: "text-sm",
                         }}
                       />
                     </div>
-                    
-                    <div className="relative group/content flex-1">
-                      <Textarea
-                        label="Dispatch Body"
-                        labelPlacement="outside"
-                        placeholder="Compose your high-priority transmission here... HTML is supported."
-                        variant="flat"
-                        radius="3xl"
-                        minRows={14}
-                        value={message}
-                        onValueChange={setMessage}
-                        classNames={{
-                          inputWrapper: "bg-default-100/60 dark:bg-default-100/05 border-2 border-divider/40 p-8 data-[hover=true]:border-primary focus-within:!border-primary transition-all duration-500 shadow-xl",
-                          input: "text-base font-medium text-default-800 leading-relaxed placeholder:text-default-300 scrollbar-hide",
-                          label: "font-black uppercase tracking-[0.4em] text-[10px] text-primary mb-3 ml-2"
+
+                    {/* Message Body */}
+                    <div>
+                    <div className="flex w-full flex-col gap-4">
+                      <div key="flat" className="flex w-full flex-wrap md:flex-nowrap mb-6 md:mb-0 gap-4">
+                        <TextArea
+                          label="Message Body"
+                          placeholder="Write your message here... Use clear and professional language."
+                          minRows={12}
+                          variant="flat"
+                          value={message}
+                          onValueChange={setMessage}
+                          classNames={{
+                            inputWrapper: "bg-gray-100/50 border-none rounded-xl p-4",
+                            input: "text-sm leading-relaxed",
+                            label: "text-sm font-semibold text-gray-700",
+                          }}
+                        />
+                      </div>
+                    </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="text-xs text-gray-500">
+                          {message.length} characters
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Supports plain text
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-3 pt-4">
+                      <Button
+                        variant="bordered"
+                        className="border-gray-300 text-gray-700 rounded-xl"
+                        onPress={() => {
+                          setSubject('');
+                          setMessage('');
                         }}
-                      />
+                      >
+                        Clear
+                      </Button>
+                      <Button 
+                        color="primary"
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8"
+                        startContent={!loading && <Send size={16} />}
+                        onClick={handleSend}
+                        isLoading={loading}
+                      >
+                        {loading ? 'Sending...' : 'Send Message'}
+                      </Button>
                     </div>
-                 </div>
+                  </div>
+                )}
 
-                   {status && (
-                     <div
-                       className={`p-6 rounded-3xl border-2 flex items-center gap-6 shadow-2xl animate-in zoom-in-95 duration-500 ${status.success ? "bg-success/[0.03] border-success/30 text-success shadow-success/10" : "bg-danger/[0.03] border-danger/20 text-danger shadow-danger/10"}`}
-                     >
-                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${status.success ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}>
-                         {status.success ? <CheckCircle2 size={24} strokeWidth={2.5} /> : <ShieldAlert size={24} strokeWidth={2.5} />}
-                       </div>
-                       <div className="flex-1">
-                         <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 opacity-60 italic">System Status</p>
-                         <p className="text-sm font-bold tracking-tight">{status.message}</p>
-                       </div>
-                     </div>
-                   )}
-              </div>
-
-              {/* Compose Footer */}
-              <div className="p-10 bg-default-50/20 border-t border-divider/10 flex flex-col sm:flex-row justify-between items-center gap-8">
-                 <div className="flex items-center gap-5 text-default-400 font-bold uppercase tracking-widest text-[10px]">
-                    <div className="p-2 bg-default-100 rounded-lg">
-                      <Hash size={16} />
+                {activeTab === 'preview' && (
+                  <div className="space-y-4">
+                    <div className="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <Mail size={14} className="text-gray-500" />
+                            <span className="text-xs font-medium text-gray-600">System Message</span>
+                          </div>
+                          <span className="text-xs text-gray-400">Preview</span>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                            {subject || "No Subject"}
+                          </h3>
+                          <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                            {message || "Your message will appear here..."}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <span>Data integrity validated</span>
-                 </div>
-                 <Button 
-                   color="primary" 
-                   variant="shadow"
-                   radius="full"
-                   className="px-20 h-20 font-black uppercase tracking-[0.4em] text-[10px] shadow-[0_32px_64px_-12px_rgba(var(--primary-rgb),0.5)] hover:scale-[1.05] active:scale-95 transition-all"
-                   startContent={<Send size={24} strokeWidth={3} className="mr-3" />}
-                   onClick={handleSend}
-                   isLoading={loading}
-                 >
-                   Send Message
-                 </Button>
+                    <p className="text-xs text-gray-500 text-center">
+                      This is how your message will appear to recipients
+                    </p>
+                  </div>
+                )}
+
+                {activeTab === 'templates' && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { 
+                          title: 'Welcome Message', 
+                          desc: 'Onboarding for new team nodes.',
+                          subject: 'Welcome to ThingsNXT: Mission Control Initialized',
+                          message: `Hello,\n\nWelcome to the ThingsNXT Enterprise Platform. Your node identity has been established and your credentials are now active.\n\nTo begin your journey:\n1. Access the Mission Control dashboard.\n2. Provision your initial edge devices.\n3. Configure your telemetry pipelines.\n\nIf you require technical uplink support, please contact the system administrator.\n\nBest regards,\nThingsNXT Command`
+                        },
+                        { 
+                          title: 'Security Alert', 
+                          desc: 'Identity and access incident notification.',
+                          subject: '[CRITICAL] Security Alert: Unauthorized Access Attempt',
+                          message: `URGENT SECURITY NOTICE,\n\nOur automated monitoring system has detected an unusual login attempt associated with your account from a previously unknown infrastructure node.\n\nLocation: Unknown\nTimestamp: ${new Date().toISOString()}\n\nIf this was not you, please perform an immediate identity rotation (reset password) and notify the Security Operations Center (SOC) through the established secure channel.\n\nSecurity is our primary directive.\n\nThingsNXT Security Hub`
+                        },
+                        { 
+                          title: 'Maintenance Notice', 
+                          desc: 'Scheduled infrastructure maintenance.',
+                          subject: 'Infrastructure Update: Scheduled System Maintenance',
+                          message: `ATTN: System Maintenance Scheduled,\n\nWe will be performing a critical core update to the ThingsNXT Mesh infrastructure during the following window:\n\nStart: Sunday, 02:00 UTC\nEnd: Sunday, 04:00 UTC\n\nImpact: The Admin Dashboard and API Gateway will be intermittently unavailable. Data ingestion from edge devices will be queued but may experience latency.\n\nThank you for your cooperation in maintaining our platform's exponential speed.\n\nSystem Operations`
+                        },
+                        { 
+                          title: 'Policy Update', 
+                          desc: 'Terms and compliance changes.',
+                          subject: 'Updates to ThingsNXT Terms of Service & Privacy Protocol',
+                          message: `Hello,\n\nWe are updating our Service Protocols to better support global compliance standards. These changes will take effect within 30 days.\n\nKey Updates:\n- Refined data retention parameters for telemetry logs.\n- Enhanced encryption transparency for P2P mesh links.\n- Updated cross-border data transfer clauses.\n\nYou can review the full protocol documentation in the 'Legal' section of your dashboard.\n\nCompliance Office`
+                        },
+                      ].map((template, index) => (
+                        <div 
+                          key={index} 
+                          className="p-5 bg-white rounded-2xl border border-gray-200 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10 transition-all cursor-pointer group"
+                          onClick={() => {
+                            setSubject(template.subject);
+                            setMessage(template.message);
+                            setActiveTab('compose');
+                            toast.success(`Template "${template.title}" loaded.`);
+                          }}
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="p-2 bg-blue-50 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                              <Layers size={18} />
+                            </div>
+                            <span className="text-[10px] text-blue-600 font-bold uppercase tracking-widest bg-blue-50 px-2 py-1 rounded-lg">Template</span>
+                          </div>
+                          <p className="text-base font-bold text-gray-900 mb-1 tracking-tight">{template.title}</p>
+                          <p className="text-xs text-gray-500 leading-relaxed font-medium">{template.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 text-center">
+                      Click any template to load it into the composer
+                    </p>
+                  </div>
+                )}
+
+                {/* Action feedback handled by toast.promise() */}
               </div>
             </div>
-          </EliteCard>
+          </div>
         </div>
       </div>
     </div>

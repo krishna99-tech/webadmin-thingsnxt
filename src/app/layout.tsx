@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
-import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -26,9 +32,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <body
-        className={`${outfit.variable} ${plusJakarta.variable} font-sans antialiased`}
+        className={`${inter.variable} ${outfit.variable} ${plusJakarta.variable} h-full min-h-dvh bg-background font-sans text-foreground antialiased`}
         suppressHydrationWarning
       >
         <Providers>{children}</Providers>

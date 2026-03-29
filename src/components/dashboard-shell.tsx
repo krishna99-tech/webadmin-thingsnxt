@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@heroui/react";
-import { Menu, PanelLeftClose } from "lucide-react";
+import { Menu, PanelLeftClose, Bell, Search, User } from "lucide-react";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -20,7 +20,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[hsl(210_20%_98%)] dark:bg-[hsl(222_47%_6%)]">
+      <div className="flex min-h-dvh w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           <p className="text-sm text-default-500">Loading workspace…</p>
@@ -29,21 +29,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[hsl(210_20%_98%)]">
-        <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-      </div>
-    );
-  }
+  if (!user) return null;
 
   return (
-    <div className="flex h-screen bg-[hsl(210_20%_98%)] dark:bg-[hsl(222_47%_6%)] overflow-hidden">
-      <Sidebar collapsed={sidebarCollapsed} />
+    <div className="admin-layout">
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed((c) => !c)}
+      />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
-        <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 sm:px-6 border-b border-default-200/80 dark:border-default-100/10 bg-content1/95 dark:bg-content1/90">
-          <div className="flex items-center gap-2 min-w-0">
+      <div className="content-area">
+        <header className="nav-blur z-40 flex h-14 shrink-0 items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <Button
               isIconOnly
               variant="light"
@@ -53,34 +50,38 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               onPress={() => setSidebarCollapsed(!sidebarCollapsed)}
             >
-              {sidebarCollapsed ? (
-                <Menu size={20} strokeWidth={2} />
-              ) : (
-                <PanelLeftClose size={20} strokeWidth={2} />
-              )}
+              {sidebarCollapsed ? <Menu size={20} strokeWidth={2} /> : <PanelLeftClose size={20} strokeWidth={2} />}
             </Button>
-            <div className="hidden sm:flex items-center gap-2 min-w-0 pl-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-success shrink-0" />
-              <span className="text-xs font-medium text-default-500 truncate">
-                Connected
-              </span>
+
+            <div className="hidden md:flex max-w-md flex-1 items-center gap-2 rounded-xl border border-default-200/80 bg-default-100/50 px-3 py-2 text-default-500 dark:border-default-100/10 dark:bg-default-100/5">
+              <Search size={16} className="shrink-0 opacity-70" />
+              <span className="text-xs font-medium truncate">Search workspace…</span>
+              <kbd className="ml-auto hidden sm:inline-flex h-5 select-none items-center rounded border border-default-200 bg-content1 px-1.5 font-mono text-[10px] text-default-400 dark:border-default-100/15">
+                ⌘K
+              </kbd>
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-3 text-right">
-            <div>
-              <p className="text-[10px] font-medium text-default-400 uppercase tracking-wide">
-                Environment
-              </p>
-              <p className="text-xs font-semibold text-default-700 dark:text-default-300">
-                Production
-              </p>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="hidden sm:flex flex-col items-end pr-1">
+              <span className="text-[10px] font-medium uppercase tracking-wide text-default-400">Environment</span>
+              <span className="text-xs font-semibold text-default-700 dark:text-default-200">Production</span>
+            </div>
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2 py-1 text-[10px] font-medium text-success">
+              <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+              Live
+            </span>
+            <Button isIconOnly variant="light" radius="full" size="sm" className="text-default-500" aria-label="Notifications">
+              <Bell size={20} />
+            </Button>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-xs font-bold text-primary-foreground shadow-sm ring-2 ring-background">
+              {user.username?.charAt(0).toUpperCase() || <User size={14} strokeWidth={2} />}
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto scrollbar-hide bg-default-100/50 dark:bg-default-50/[0.03]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 min-h-full">
+        <main className="admin-main flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+          <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             {children}
           </div>
         </main>

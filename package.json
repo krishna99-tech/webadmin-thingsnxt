@@ -3,21 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start --turbopack",
     "lint": "next lint"
   },
   "dependencies": {
-    "@heroui/react": "^2.8.8",
+    "@gravity-ui/icons": "^2.18.0",
+    "@heroui/react": "^2.8.10",
+    "@iconify/react": "^6.0.2",
     "axios": "^1.14.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",
     "next": "^15.2.4",
+    "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "reactflow": "^11.11.4",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {

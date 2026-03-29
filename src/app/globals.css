@@ -4,122 +4,539 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 224 71% 4%;
+    /* Sophisticated Light Palette */
+    --background: 210 50% 98%;
+    --foreground: 222 47% 11%;
+    
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
+    --card-foreground: 222 47% 11%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
+    --popover-foreground: 222 47% 11%;
+    
     --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
+    
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
+    
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
+    
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
+
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 355.7 100% 97.3%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 26 83.3% 14.1%;
+    
+    --danger: 0 72% 51%;
+    --danger-foreground: 210 40% 98%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --radius: 0.75rem;
+    
+    --radius: 1rem;
+    
+    /* Glassmorphism Light */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    
+    /* Cyberpunk Accents */
+    --cyber-blue: 217.2 91.2% 59.8%;
+    --cyber-purple: 271 91% 65%;
+    --cyber-pink: 340 82% 52%;
+    --cyber-cyan: 189 94% 43%;
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 213 31% 91%;
-    --primary: 217 91% 60%;
+    /* Premium Dark Palette */
+    --background: 230 25% 4%;
+    --foreground: 210 40% 98%;
+    
+    --card: 230 25% 7%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 230 25% 7%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 222 47% 11%;
+    
+    --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-    --accent: 216 34% 17%;
+    
+    --muted: 217.2 32.6% 12.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
+    
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --ring: 212.7 26.8% 83.9%;
+    
+    --success: 142.1 70.6% 45.3%;
+    --success-foreground: 144.9 80.4% 10%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 26 83.3% 14.1%;
+    
+    --danger: 0 72% 51%;
+    --danger-foreground: 210 40% 98%;
+    
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+
+    /* Glassmorphism Dark */
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    
+    /* Cyberpunk Dark Accents */
+    --cyber-blue: 217.2 91.2% 59.8%;
+    --cyber-purple: 271 91% 65%;
+    --cyber-pink: 340 82% 52%;
+    --cyber-cyan: 189 94% 43%;
   }
 }
 
-body {
-  @apply bg-background text-foreground antialiased;
-  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
-  overflow-x: hidden;
-}
-
-h1,
-h2,
-h3,
-.font-heading {
-  font-family: var(--font-heading), var(--font-outfit), ui-sans-serif, system-ui,
-    sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-/* No external images — faster first paint */
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-default-300/50 rounded-full hover:bg-default-400/60;
-}
-
-* {
-  -webkit-tap-highlight-color: transparent;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/20;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  
+  /* Modern Focus Styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
 }
 
 @layer components {
-  .admin-page {
-    @apply w-full max-w-7xl mx-auto space-y-8 pb-10;
+  /* Glass Card Variants */
+  .glass-card {
+    @apply bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] shadow-2xl;
   }
-
-  .admin-page-muted {
-    @apply rounded-xl border border-default-200/80 dark:border-default-100/15 bg-default-50/50 dark:bg-default-50/5 p-6 sm:p-8;
+  
+  .glass-card-premium {
+    @apply bg-[var(--glass-bg)] backdrop-blur-2xl border border-[var(--glass-border)] shadow-2xl;
   }
-
-  .tactical-grid {
-    @apply rounded-xl border border-default-200/80 dark:border-default-100/15 bg-default-50/30 dark:bg-default-50/5 p-4 md:p-6;
+  
+  .glass-card-dark {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+  
+  /* Gradient Backgrounds */
+  .premium-gradient {
+    @apply bg-gradient-to-br from-primary via-primary/80 to-primary/60;
+  }
+  
+  .cyber-gradient {
+    @apply bg-gradient-to-br from-[hsl(var(--cyber-blue))] via-[hsl(var(--cyber-purple))] to-[hsl(var(--cyber-pink))];
+  }
+  
+  .dark-cyber-gradient {
+    @apply bg-gradient-to-br from-[hsl(var(--cyber-blue))]/20 via-[hsl(var(--cyber-purple))]/20 to-[hsl(var(--cyber-pink))]/20;
+  }
+  
+  /* Text Gradients */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 font-bold;
+  }
+  
+  .text-gradient-cyber {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--cyber-blue))] via-[hsl(var(--cyber-purple))] to-[hsl(var(--cyber-pink))];
+  }
+  
+  /* Navigation */
+  .nav-blur {
+    @apply sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+  }
+  
+  .sidebar-blur {
+    @apply border-r border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+  }
+  
+  /* Dashboard Grids */
+  .dashboard-grid {
+    @apply grid gap-4 md:grid-cols-2 lg:grid-cols-4;
+  }
+  
+  /* Stats Cards */
+  .stats-card {
+    @apply relative overflow-hidden rounded-2xl border border-border/50 bg-card p-6 transition-all hover:shadow-lg hover:border-primary/30;
+  }
+  
+  .stats-card-bg {
+    @apply absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl transition-all;
+  }
+  
+  .stats-card:hover .stats-card-bg {
+    @apply bg-primary/10;
+  }
+  
+  /* Modern Button Styles */
+  .btn-cyber {
+    @apply relative overflow-hidden font-black uppercase tracking-wider transition-all duration-300 
+           bg-gradient-to-r from-primary to-blue-600 text-white shadow-xl shadow-primary/30
+           hover:scale-105 hover:shadow-2xl hover:shadow-primary/50
+           active:scale-95;
+  }
+  
+  .btn-cyber::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-white/20 to-transparent 
+           -translate-x-full transition-transform duration-500;
+  }
+  
+  .btn-cyber:hover::before {
+    @apply translate-x-0;
+  }
+  
+  /* Input Modern Styles */
+  .input-modern {
+    @apply bg-default-100/50 border-2 border-default-200 focus:border-primary-500 
+           transition-all duration-300 rounded-xl shadow-inner
+           hover:border-primary-300 focus:shadow-lg;
+  }
+  
+  /* Card Hover Effects */
+  .card-hover {
+    @apply transition-all duration-500 hover:shadow-2xl hover:-translate-y-1;
+  }
+  
+  /* Badge Styles */
+  .badge-cyber {
+    @apply font-black uppercase tracking-wider text-[9px] px-3 py-1.5 rounded-full 
+           bg-gradient-to-r from-primary/20 to-transparent border border-primary/30;
+  }
+  
+  /* Status Indicators */
+  .status-dot {
+    @apply relative flex h-2 w-2;
+  }
+  
+  .status-dot-ping {
+    @apply absolute inline-flex h-full w-full animate-ping rounded-full opacity-75;
+  }
+  
+  .status-dot-static {
+    @apply relative inline-flex h-2 w-2 rounded-full;
   }
 }
 
-:root {
-  --primary-rgb: 59, 130, 246;
-}
-
-.dark {
-  --primary-rgb: 96, 165, 250;
-}
-
-.admin-login-root {
-  position: relative;
-  z-index: 1;
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
+@layer utilities {
+  /* Custom Animations */
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
   }
-  100% {
-    transform: translateX(100%);
+  
+  @keyframes float-reverse {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(10px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+  }
+  
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slide-in-top {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slide-in-bottom {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes zoom-in {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  /* Animation Classes */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-float-reverse {
+    animation: float-reverse 6s ease-in-out infinite;
+  }
+  
+  .animate-pulse-soft {
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 3s ease-in-out infinite;
+  }
+  
+  .animate-slide-in-left {
+    animation: slide-in-left 0.5s ease-out;
+  }
+  
+  .animate-slide-in-right {
+    animation: slide-in-right 0.5s ease-out;
+  }
+  
+  .animate-slide-in-top {
+    animation: slide-in-top 0.5s ease-out;
+  }
+  
+  .animate-slide-in-bottom {
+    animation: slide-in-bottom 0.5s ease-out;
+  }
+  
+  .animate-zoom-in {
+    animation: zoom-in 0.3s ease-out;
+  }
+  
+  /* Scrollbar Styles */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full hover:bg-muted-foreground/30 transition-colors;
+  }
+  
+  /* Custom Scrollbar for Cyber Theme */
+  .scrollbar-cyber::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-cyber::-webkit-scrollbar-track {
+    @apply bg-default-100/50 rounded-full;
+  }
+  
+  .scrollbar-cyber::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 rounded-full hover:bg-primary/70;
+  }
+  
+  /* Hide Scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Admin shell: sidebar column + main (scroll lives in .admin-main only) */
+  .admin-layout {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .content-area {
+    @apply flex min-h-0 min-w-0 flex-col overflow-hidden bg-default-50/40 dark:bg-background/95;
+  }
+
+  .admin-main {
+    @apply scrollbar-hide;
+  }
+  
+  /* Grid Background Pattern */
+  .grid-pattern {
+    background-image: 
+      linear-gradient(to right, rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  
+  /* Dot Pattern */
+  .dot-pattern {
+    background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+  
+  /* Text Line Clamp */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  
+  /* Glass Effect Utilities */
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+  }
+  
+  .backdrop-blur-md {
+    backdrop-filter: blur(8px);
+  }
+  
+  .backdrop-blur-lg {
+    backdrop-filter: blur(12px);
+  }
+  
+  .backdrop-blur-xl {
+    backdrop-filter: blur(20px);
+  }
+  
+  .backdrop-blur-2xl {
+    backdrop-filter: blur(24px);
+  }
+  
+  .backdrop-blur-3xl {
+    backdrop-filter: blur(32px);
+  }
+  
+  /* Border Gradient */
+  .border-gradient {
+    border-image: linear-gradient(to right, hsl(var(--cyber-blue)), hsl(var(--cyber-purple))) 1;
+  }
+  
+  /* Text Shadow */
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow-glow {
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+  
+  /* Transition Utilities */
+  .transition-smooth {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .transition-bounce {
+    transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 }
 
-.animate-shimmer {
-  animation: shimmer 2s infinite;
+/* Custom HeroUI Overrides */
+@layer components {
+  /* Autocomplete Custom Styles */
+  .heroui-autocomplete-custom {
+    @apply rounded-xl;
+  }
+  
+  /* Tabs Custom Styles */
+  .heroui-tabs-custom {
+    @apply font-black uppercase tracking-wider;
+  }
+  
+  /* Radio Custom Styles */
+  .heroui-radio-custom {
+    @apply border-2;
+  }
+  
+  /* Chip Custom Styles */
+  .heroui-chip-custom {
+    @apply font-black uppercase tracking-wider text-[9px];
+  }
+}
+
+/* Responsive Breakpoints */
+@layer utilities {
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .section-spacing {
+    @apply py-12 sm:py-16 lg:py-20;
+  }
+  
+  .card-spacing {
+    @apply p-6 sm:p-8 lg:p-10;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none;
+  }
+  
+  body {
+    @apply bg-white text-black;
+  }
 }

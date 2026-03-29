@@ -9,7 +9,8 @@ import {
   Tabs, 
   Tab, 
   Chip,
-  Snippet,
+  Tooltip,
+  Spinner
 } from '@heroui/react';
 import { 
   Save, 
@@ -20,9 +21,13 @@ import {
   ShieldCheck,
   Terminal,
   LockKeyhole,
-  Workflow
+  Workflow,
+  CheckCircle2,
+  XCircle,
+  Code,
+  Network,
+  Zap
 } from 'lucide-react';
-import { EliteCard } from '@/components/ui/elite-card';
 import ReactFlow, { 
   Background, 
   Controls, 
@@ -35,6 +40,7 @@ const SecurityRules = () => {
   const [editedRules, setEditedRules] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
   
   // React Flow State
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -44,24 +50,26 @@ const SecurityRules = () => {
     fetchRules();
   }, []);
 
-  // Effect to update flow chart when rules change
   useEffect(() => {
     if (rules) {
       generateFlow(rules);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rules]);
 
   const fetchRules = async () => {
     setLoading(true);
+    setStatus(null);
     try {
       const response = await adminApi.getSecurityRules();
       setRules(response.data);
       setEditedRules(JSON.stringify(response.data, null, 2));
+      setStatus({ success: true, message: 'Security rules loaded successfully' });
     } catch (error) {
       console.error('Failed to fetch security rules:', error);
+      setStatus({ success: false, message: 'Failed to load security rules' });
     } finally {
       setTimeout(() => setLoading(false), 500);
+      setTimeout(() => setStatus(null), 3000);
     }
   };
 
@@ -72,10 +80,10 @@ const SecurityRules = () => {
     // Core Node
     newNodes.push({
       id: 'root',
-      data: { label: 'SECURITY_CORE' },
+      data: { label: 'Security Core' },
       position: { x: 400, y: 0 },
       type: 'input',
-      className: 'bg-primary text-white font-black rounded-2xl border-none p-4 shadow-2xl shadow-primary/20 tracking-widest text-xs italic',
+      className: 'bg-blue-600 text-white font-semibold rounded-lg shadow-md px-4 py-2',
     });
 
     let colX = 0;
@@ -87,9 +95,9 @@ const SecurityRules = () => {
       // Collection Node
       newNodes.push({
         id: colId,
-        data: { label: collection.toUpperCase() },
+        data: { label: collection },
         position: { x: colX, y: 150 },
-        className: 'bg-background border-2 border-divider p-6 rounded-[2rem] font-black italic tracking-tighter text-lg shadow-xl',
+        className: 'bg-white border-2 border-gray-200 rounded-xl p-3 font-semibold text-gray-900 shadow-sm',
       });
 
       newEdges.push({
@@ -97,49 +105,49 @@ const SecurityRules = () => {
         source: 'root',
         target: colId,
         animated: true,
-        style: { stroke: 'rgba(var(--primary-rgb), 0.3)', strokeWidth: 2 },
+        style: { stroke: '#3b82f6', strokeWidth: 2 },
       });
 
-      // Child Rules (like .read, .write or wildcard keys)
+      // Child Rules
       if (typeof config === 'object') {
         let opY = 300;
         Object.entries(config).forEach(([op, ruleExpr]) => {
           const opId = `op-${collection}-${op}`;
           
           if (typeof ruleExpr === 'object') {
-             // Handle wildcards like $device_id
              newNodes.push({
                 id: opId,
                 data: { label: op },
                 position: { x: colX, y: opY },
-                className: 'bg-secondary/10 border-2 border-secondary/30 p-4 rounded-2xl font-black text-[10px] tracking-widest text-secondary',
+                className: 'bg-purple-50 border-2 border-purple-200 rounded-lg p-3 font-semibold text-sm text-purple-700',
              });
-             newEdges.push({ id: `e-${colId}-${opId}`, source: colId, target: opId, style: { stroke: 'rgba(var(--secondary-rgb), 0.5)' } });
+             newEdges.push({ id: `e-${colId}-${opId}`, source: colId, target: opId, style: { stroke: '#a855f7' } });
              
-             // Nest deeper for wildcards
              let subOpY = opY + 120;
              Object.entries(ruleExpr).forEach(([subOp, expr]) => {
                 const subId = `sub-${collection}-${op}-${subOp}`;
+                const exprPreview = typeof expr === 'string' 
+                  ? (expr.length > 40 ? expr.slice(0, 40) + '...' : expr)
+                  : 'Complex Expression';
                 newNodes.push({
                   id: subId,
-                  data: { label: `${subOp}: ${typeof expr === 'string' ? expr.slice(0, 30) + '...' : 'EXPR_COMPLEX'}` },
+                  data: { label: `${subOp}: ${exprPreview}` },
                   position: { x: colX - 50, y: subOpY },
-                  className: 'bg-default-100 border-1 border-divider p-4 rounded-xl font-mono text-[9px] w-[250px] overflow-hidden text-ellipsis',
+                  className: 'bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs font-mono max-w-[250px]',
                 });
                 newEdges.push({ id: `e-${opId}-${subId}`, source: opId, target: subId });
                 subOpY += 80;
              });
              opY = subOpY + 50;
           } else {
-             const exprPreview =
-               typeof ruleExpr === "string"
-                 ? `${ruleExpr.slice(0, 30)}...`
-                 : String(ruleExpr);
+             const exprPreview = typeof ruleExpr === "string"
+               ? (ruleExpr.length > 40 ? ruleExpr.slice(0, 40) + '...' : ruleExpr)
+               : String(ruleExpr);
              newNodes.push({
                 id: opId,
                 data: { label: `${op}: ${exprPreview}` },
                 position: { x: colX, y: opY },
-                className: 'bg-default-50 border-1 border-divider p-4 rounded-xl font-mono text-[9px] w-[250px]',
+                className: 'bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs font-mono max-w-[250px]',
              });
              newEdges.push({ id: `e-${colId}-${opId}`, source: colId, target: opId });
              opY += 100;
@@ -156,199 +164,287 @@ const SecurityRules = () => {
 
   const handleSave = async () => {
     setSaving(true);
+    setStatus(null);
     try {
       const parsedRules = JSON.parse(editedRules);
       await adminApi.updateSecurityRules(parsedRules);
       setRules(parsedRules);
-      alert('Security_Protocol_Deployed: Access control nodes updated successfully.');
+      setStatus({ success: true, message: 'Security rules deployed successfully' });
+      setTimeout(() => setStatus(null), 3000);
     } catch (error) {
-      alert('SYNTAX_ERROR: Failed to parse security JSON. Root: ' + error.message);
+      setStatus({ success: false, message: `Syntax error: ${error.message}` });
     } finally {
       setSaving(false);
     }
   };
 
+  const handleReset = () => {
+    if (rules) {
+      setEditedRules(JSON.stringify(rules, null, 2));
+      setStatus({ success: true, message: 'Reset to last saved version' });
+      setTimeout(() => setStatus(null), 2000);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Spinner size="lg" color="primary" />
+          <p className="mt-4 text-gray-600">Loading security rules...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="admin-page space-y-10">
-      {/* Dynamic Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="absolute -inset-2 bg-secondary/20 blur-lg rounded-lg animate-pulse"></div>
-              <div className="relative p-3 bg-secondary text-white rounded-2xl shadow-2xl shadow-secondary/40">
-                <LockKeyhole size={24} strokeWidth={2.5} />
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
+        
+        {/* Page Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-purple-600 rounded-xl">
+              <LockKeyhole size={20} className="text-white" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black text-secondary uppercase tracking-[0.5em] leading-none mb-1">Firewall_Orchestration.v4</span>
+            <div>
               <div className="flex items-center gap-2">
-                <ShieldCheck size={12} className="text-success" />
-                <span className="text-[9px] font-black text-success uppercase tracking-widest">Access_Control_Optimal</span>
+                <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Security Console</span>
+                <Chip size="sm" variant="flat" color="success" className="text-[10px] font-semibold">
+                  v4.0
+                </Chip>
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck size={12} className="text-green-600" />
+                  <span className="text-xs text-gray-600">Access Control Active</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                  <span className="text-xs text-gray-600">Rules Engine Online</span>
+                </div>
               </div>
             </div>
           </div>
-          <h1 className="text-6xl font-black tracking-tight uppercase text-default-900 italic leading-none">
-            Guard<span className="text-primary not-italic">.v4</span>
-          </h1>
-          <p className="text-default-400 font-bold text-xs max-w-lg leading-relaxed uppercase tracking-wider">
-            Fine-grained RBAC orchestration and policy deployment. <br/>
-            Validating <span className="text-primary">Global</span> security rules across all infrastructure nodes.
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-4 bg-default-100/50 backdrop-blur-xl p-3 rounded-2xl border border-divider/20">
-          <Button 
-            variant="flat"
-            className="font-black uppercase tracking-widest text-[10px] h-14 px-8 bg-background border border-divider shadow-xl hover:translate-y-[-2px] transition-all"
-            startContent={<RotateCcw size={18} className={loading || saving ? "animate-spin" : "text-primary"} />}
-            onClick={fetchRules}
-            isDisabled={loading || saving}
-          >
-            Reset_Protocol
-          </Button>
-          <Button 
-            color="primary" 
-            variant="shadow"
-            className="font-black uppercase tracking-widest px-10 h-14 shadow-2xl shadow-primary/30 rounded-2xl hover:scale-105 transition-all"
-            startContent={<Save size={20} strokeWidth={3} />} 
-            onClick={handleSave}
-            isLoading={saving}
-            isDisabled={loading}
-          >
-            Deploy Change
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Info HUD Panel */}
-        <div className="lg:col-span-3 space-y-8">
-          <EliteCard className="bg-primary/[0.02] border-primary/10">
-            <div className="flex items-center gap-3 mb-4 text-primary">
-              <ShieldCheck size={20} />
-              <span className="font-black uppercase tracking-widest text-xs">Active Shield</span>
-            </div>
-            <p className="text-[10px] font-bold text-default-500 leading-relaxed uppercase tracking-tight">
-              evaluated in real-time by the <span className="text-primary">SecurityRulesEngine</span> for every synchronous request.
-            </p>
-            <div className="flex flex-wrap gap-2 pt-6">
-              <Chip size="sm" variant="flat" color="primary" className="font-black uppercase text-[9px] px-2 h-6">.read</Chip>
-              <Chip size="sm" variant="flat" color="primary" className="font-black uppercase text-[9px] px-2 h-6">.write</Chip>
-              <Chip size="sm" variant="flat" color="primary" className="font-black uppercase text-[9px] px-2 h-6">.telemetry</Chip>
-            </div>
-          </EliteCard>
-
-          <EliteCard className="bg-warning/[0.02] border-warning/10">
-            <div className="flex items-center gap-3 mb-4 text-warning">
-              <AlertTriangle size={20} />
-              <span className="font-black uppercase tracking-widest text-xs">Policy Warning</span>
-            </div>
-            <p className="text-[10px] font-bold text-warning/80 leading-relaxed uppercase tracking-tight">
-              Changes take effect immediately across all nodes. Root access is required for full deployment.
-            </p>
-          </EliteCard>
-
-          <EliteCard className="bg-secondary/[0.02] border-secondary/10">
-            <div className="flex items-center gap-3 mb-4 text-secondary">
-              <Terminal size={20} />
-              <span className="font-black uppercase tracking-widest text-xs">Rule Pattern</span>
-            </div>
-            <Snippet hideSymbol variant="bordered" className="text-[9px] bg-background border-divider/30 font-mono w-full overflow-hidden">
-              {`"auth.uid === data.owner_id"`}
-            </Snippet>
-            <p className="text-[9px] font-bold text-default-400 uppercase mt-3">Ownership match sequence</p>
-          </EliteCard>
+          
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Security Rules Engine</h1>
+          <p className="text-gray-600">Define and manage fine-grained access control policies for your application.</p>
         </div>
 
-        {/* Intelligence Editor HUD */}
-        <div className="lg:col-span-9">
-          <EliteCard className="p-0 overflow-hidden border-divider/30">
-            <Tabs 
-              aria-label="Editor modes" 
-              variant="underlined"
-              color="primary"
-              classNames={{
-                tabList: "px-10 border-b border-divider/10 w-full bg-default-50/20",
-                tab: "max-w-fit px-0 h-20 mr-10",
-                tabContent: "font-black uppercase italic tracking-tighter text-lg leading-none group-data-[selected=true]:text-primary group-data-[selected=true]:translate-y-[-2px] transition-all",
-                cursor: "w-full bg-primary h-1 rounded-full shadow-lg shadow-primary/40"
-              }}
-            >
-              <Tab 
-                key="editor" 
-                title={
-                  <div className="flex items-center gap-3">
-                    <FileJson size={20} />
-                    <span>Policy_Editor</span>
-                  </div>
-                }
-              >
-                <div className="p-10 relative group">
-                  <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                  <textarea
-                    className="w-full h-[600px] p-10 font-mono text-sm bg-background/50 backdrop-blur-3xl rounded-[2.5rem] border-2 border-divider/40 focus:outline-none focus:border-primary focus:shadow-[0_0_50px_rgba(var(--primary-rgb),0.1)] transition-all duration-500 resize-none text-default-900 selection:bg-primary/20"
-                    value={editedRules}
-                    onChange={(e) => setEditedRules(e.target.value)}
-                    placeholder="Initialize security registry JSON..."
-                    spellCheck={false}
-                  />
-                  <div className="absolute bottom-16 right-16 flex items-center gap-2 px-4 py-2 bg-background/80 rounded-full border border-divider/40 shadow-xl">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
-                    <span className="text-[9px] font-black uppercase tracking-widest">Real_Time_Policy_Sync</span>
-                  </div>
+        {/* Status Message */}
+        {status && (
+          <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 ${
+            status.success 
+              ? 'bg-green-50 border border-green-200' 
+              : 'bg-red-50 border border-red-200'
+          }`}>
+            {status.success ? (
+              <CheckCircle2 size={18} className="text-green-600 mt-0.5" />
+            ) : (
+              <XCircle size={18} className="text-red-600 mt-0.5" />
+            )}
+            <div className="flex-1">
+              <p className={`text-sm font-medium ${status.success ? 'text-green-800' : 'text-red-800'}`}>
+                {status.success ? 'Success' : 'Error'}
+              </p>
+              <p className={`text-sm ${status.success ? 'text-green-700' : 'text-red-700'}`}>
+                {status.message}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left Panel - Info */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Info Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <ShieldCheck size={16} className="text-blue-600" />
+                <h3 className="font-semibold text-gray-900">Active Policies</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Rules are evaluated in real-time for every authenticated request to ensure proper access control.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Chip size="sm" variant="flat" className="bg-blue-50 text-blue-700 text-xs">.read</Chip>
+                <Chip size="sm" variant="flat" className="bg-blue-50 text-blue-700 text-xs">.write</Chip>
+                <Chip size="sm" variant="flat" className="bg-blue-50 text-blue-700 text-xs">.validate</Chip>
+                <Chip size="sm" variant="flat" className="bg-blue-50 text-blue-700 text-xs">.index</Chip>
+              </div>
+            </div>
+
+            {/* Warning Card */}
+            <div className="bg-amber-50 rounded-xl border border-amber-200 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle size={16} className="text-amber-600" />
+                <h3 className="font-semibold text-amber-900">Important Notice</h3>
+              </div>
+              <p className="text-sm text-amber-800">
+                Changes take effect immediately across all nodes. Incorrect rules may break application functionality.
+              </p>
+            </div>
+
+            {/* Pattern Card */}
+            <div className="bg-gray-50 rounded-xl border border-gray-200 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Terminal size={16} className="text-gray-600" />
+                <h3 className="font-semibold text-gray-900">Rule Pattern</h3>
+              </div>
+              <code className="block bg-white p-3 rounded-lg text-xs font-mono text-gray-700 border border-gray-200 mb-3">
+                {"auth.uid === resource.owner_id"}
+              </code>
+              <p className="text-xs text-gray-500">Ownership validation pattern</p>
+            </div>
+
+            {/* Stats Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center">
+                  <Network size={16} className="text-blue-600 mx-auto mb-1" />
+                  <p className="text-[10px] font-medium text-gray-500 uppercase">Collections</p>
+                  <p className="text-xl font-bold text-gray-900">{rules ? Object.keys(rules).length : 0}</p>
                 </div>
-              </Tab>
+                <div className="text-center">
+                  <Zap size={16} className="text-amber-600 mx-auto mb-1" />
+                  <p className="text-[10px] font-medium text-gray-500 uppercase">Active Rules</p>
+                  <p className="text-xl font-bold text-amber-600">Active</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel - Editor */}
+          <div className="lg:col-span-9">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               
-              <Tab 
-                key="flow" 
-                title={
-                  <div className="flex items-center gap-3">
-                    <Workflow size={20} />
-                    <span>Visual_Registry</span>
-                  </div>
-                }
+              {/* Action Bar */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50/50">
+                <div className="flex items-center gap-2">
+                  <Code size={14} className="text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">Rule Editor</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Tooltip content="Reset to last saved">
+                    <Button
+                      size="sm"
+                      variant="flat"
+                      className="bg-white border border-gray-200 text-gray-700"
+                      onPress={handleReset}
+                      isDisabled={saving}
+                    >
+                      <RotateCcw size={14} />
+                      <span className="ml-1 text-xs">Reset</span>
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="Deploy changes">
+                    <Button
+                      size="sm"
+                      color="primary"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onPress={handleSave}
+                      isLoading={saving}
+                    >
+                      <Save size={14} />
+                      <span className="ml-1 text-xs">{saving ? 'Deploying...' : 'Deploy'}</span>
+                    </Button>
+                  </Tooltip>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <Tabs 
+                aria-label="Editor modes" 
+                variant="underlined"
+                color="primary"
+                classNames={{
+                  tabList: "gap-6 px-6 pt-4 border-b border-gray-200",
+                  tab: "h-10",
+                  tabContent: "group-data-[selected=true]:text-blue-600 text-gray-600 text-sm font-medium"
+                }}
               >
-                 <div className="h-[600px] w-full p-6 relative">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(var(--primary-rgb),0.05)_0%,transparent_100%)]"></div>
+                <Tab 
+                  key="editor" 
+                  title={
+                    <div className="flex items-center gap-2">
+                      <FileJson size={14} />
+                      <span>Editor</span>
+                    </div>
+                  }
+                >
+                  <div className="p-6">
+                    <textarea
+                      className="w-full h-[500px] p-4 font-mono text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none text-gray-900"
+                      value={editedRules}
+                      onChange={(e) => setEditedRules(e.target.value)}
+                      placeholder="Enter security rules in JSON format..."
+                      spellCheck={false}
+                    />
+                    <div className="mt-3 flex justify-between items-center">
+                      <p className="text-xs text-gray-500">
+                        JSON format required • {editedRules.length} characters
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        <span className="text-xs text-gray-500">Live editing</span>
+                      </div>
+                    </div>
+                  </div>
+                </Tab>
+                
+                <Tab 
+                  key="flow" 
+                  title={
+                    <div className="flex items-center gap-2">
+                      <Workflow size={14} />
+                      <span>Visualizer</span>
+                    </div>
+                  }
+                >
+                  <div className="h-[500px] w-full relative">
                     <ReactFlow
                       nodes={nodes}
                       edges={edges}
                       onNodesChange={onNodesChange}
                       onEdgesChange={onEdgesChange}
                       fitView
-                      className="rounded-[2.5rem]"
+                      className="bg-gray-50 rounded-lg"
                     >
-                      <Background color="rgba(var(--primary-rgb), 0.1)" gap={20} />
-                      <Controls className="bg-background border-divider rounded-xl shadow-2xl" />
+                      <Background color="#e5e7eb" gap={20} />
+                      <Controls className="bg-white border border-gray-200 rounded-lg shadow-sm" />
                     </ReactFlow>
                     
-                    <div className="absolute top-10 right-10 z-10 p-4 bg-background/80 backdrop-blur-xl border border-divider/20 rounded-2xl shadow-xl space-y-2">
-                       <p className="text-[9px] font-black uppercase tracking-widest text-primary">Protocol Map Visualization</p>
-                       <p className="text-[11px] font-bold text-default-400 italic">Evaluating security graph with ReactFlow engine...</p>
+                    <div className="absolute bottom-4 right-4 z-10 px-3 py-1.5 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-sm">
+                      <p className="text-[10px] font-medium text-gray-600">Rule Dependency Graph</p>
                     </div>
-                 </div>
-              </Tab>
+                  </div>
+                </Tab>
 
-              <Tab 
-                key="preview" 
-                title={
-                  <div className="flex items-center gap-3">
-                    <Eye size={20} />
-                    <span>Schema_View</span>
+                <Tab 
+                  key="preview" 
+                  title={
+                    <div className="flex items-center gap-2">
+                      <Eye size={14} />
+                      <span>Preview</span>
+                    </div>
+                  }
+                >
+                  <div className="p-6">
+                    <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-auto max-h-[500px]">
+                      <pre className="p-4 font-mono text-sm text-gray-700 whitespace-pre-wrap">
+                        <code>{rules ? JSON.stringify(rules, null, 2) : 'No rules loaded'}</code>
+                      </pre>
+                    </div>
+                    <p className="mt-3 text-xs text-gray-500 text-center">
+                      Current active security rules configuration
+                    </p>
                   </div>
-                }
-              >
-                <div className="p-10">
-                  <div className="p-10 bg-background/50 backdrop-blur-3xl rounded-[2.5rem] border-2 border-divider/40 overflow-auto max-h-[600px] scrollbar-hide">
-                    <pre className="font-mono text-sm text-primary/80 leading-relaxed">
-                      <code>{JSON.stringify(rules, null, 2)}</code>
-                    </pre>
-                  </div>
-                </div>
-              </Tab>
-            </Tabs>
-          </EliteCard>
+                </Tab>
+              </Tabs>
+            </div>
+          </div>
         </div>
       </div>
     </div>

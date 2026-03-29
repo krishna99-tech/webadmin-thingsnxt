@@ -82,6 +82,24 @@ export const adminApi = {
     api.post("/devices/bulk-delete", { deviceIds }),
   bulkUpdateDevices: (deviceIds: string[], updates: unknown) =>
     api.post("/devices/bulk-update", { deviceIds, updates }),
+
+  // Storage API
+  getStorageFiles: (path: string) => api.get("/storage/files", { params: { path } }),
+  getStorageStats: () => api.get("/storage/stats"),
+  createFolder: (path: string, name: string) => api.post("/storage/folder", { path, name }),
+  uploadFile: (path: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("path", path);
+    return api.post("/storage/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  deleteStorageItem: (id: string) => api.delete(`/storage/items/${id}`),
+  renameStorageItem: (id: string, name: string) => api.put(`/storage/items/${id}/rename`, { name }),
+  shareStorageItem: (id: string, email: string) => api.post(`/storage/items/${id}/share`, { email }),
+  toggleStarStorageItem: (id: string, starred: boolean) => api.patch(`/storage/items/${id}/star`, { starred }),
+  downloadFile: (id: string) => api.get(`/storage/items/${id}/download`, { responseType: "blob" }),
 };
 
 export const systemApi = {
@@ -91,7 +109,12 @@ export const systemApi = {
 
 export const authApi = {
   login: (credentials: URLSearchParams) =>
-    axios.post(`${API_BASE_URL}/token`, credentials),
+    axios.post(`${API_BASE_URL}/token`, credentials, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
+      },
+    }),
 };
 
 export default api;

@@ -1,294 +1,268 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardBody,
-  Input,
   Button,
   Checkbox,
   Link,
+  Divider,
+  Input,
 } from "@heroui/react";
-import { useAuth } from "@/contexts/auth-context";
-import { useRouter } from "next/navigation";
 import {
-  User as UserIcon,
-  Lock,
-  ShieldCheck,
-  ShieldAlert,
-  ArrowRight,
-  Activity,
-  Radio,
-  Cpu,
   Eye,
   EyeOff,
-  LogIn,
+  Lock,
+  ArrowRight,
+  ShieldCheck,
+  Terminal,
+  Globe,
+  Zap,
+  Mail,
+  ShieldAlert,
+  Activity,
+  User as UserIcon
 } from "lucide-react";
-
-const fieldClassNames = {
-  label:
-    "text-default-800 dark:text-default-100 font-semibold text-sm font-heading pb-0",
-  mainWrapper: "gap-2",
-  base: "w-full",
-  input: "text-[16px] placeholder:text-default-400",
-  innerWrapper: "gap-3",
-  inputWrapper:
-    "h-14 px-4 bg-default-100/80 dark:bg-default-50/10 shadow-none " +
-    "border-2 border-default-200/90 dark:border-default-100/15 " +
-    "data-[hover=true]:border-default-300 dark:data-[hover=true]:border-default-100/30 " +
-    "group-data-[focus=true]:border-primary group-data-[focus=true]:shadow-[0_0_0_3px_hsl(var(--primary)/0.18)] " +
-    "rounded-xl transition-[border-color,box-shadow] duration-200",
-};
+import { useAuth } from "@/contexts/auth-context";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
+  const { login, user, loading } = useAuth();
+  const router = useRouter();
+  const [isVisible, setIsVisible] = useState(false);
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const { login, user } = useAuth();
-  const router = useRouter();
-
   useEffect(() => {
-    if (user) router.replace("/");
-  }, [user, router]);
+    if (!loading && user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
 
-  if (user) return null;
+  const toggleVisibility = () => setIsVisible(!isVisible);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     setError("");
+
     try {
-      const result = await login(username, password);
-      if (result.success) {
-        router.replace("/");
-      } else {
-        setError(result.message || "Invalid username or password.");
+      const result = await login(identifier, password);
+      if (!result.success) {
+        setError(result.message || "Authentication failed");
       }
-    } catch {
-      setError("Could not reach the server. Check your connection and API URL.");
+    } catch (err) {
+      setError("An unexpected error occurred");
+      console.error(err);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="admin-login-root min-h-screen w-full flex flex-col lg:flex-row bg-default-100 dark:bg-[hsl(222_47%_4%)] selection:bg-primary/20">
-      <aside className="relative lg:w-[46%] xl:w-[44%] min-h-[280px] lg:min-h-screen flex flex-col justify-between px-8 py-14 lg:px-16 lg:py-20 text-white overflow-hidden shadow-[20px_0_60px_-15px_rgba(0,0,0,0.1)]">
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-indigo-900"
-          aria-hidden
-        />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,0,0,0.2),transparent_40%)]" aria-hidden />
+  if (loading || user) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-background">
+        <div className="relative">
+          <div className="h-16 w-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full bg-primary/10 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-        <div className="relative z-10 max-w-lg">
-          <div className="flex items-center gap-4 mb-16 group cursor-default">
-            <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-white/20 ring-1 ring-white/30 shadow-2xl backdrop-blur-md transition-all duration-500 group-hover:rotate-12 group-hover:scale-110">
-              <Cpu className="h-7 w-7 text-white" strokeWidth={2.5} />
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-background selection:bg-primary/30">
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[20%] right-[10%] w-[20%] h-[20%] bg-purple-500/10 rounded-full blur-[80px]" />
+        
+        {/* Animated Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      </div>
+
+      <div className="w-full max-w-[1200px] px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10">
+        {/* Left Side: Brand & Features */}
+        <div className="hidden lg:flex flex-col space-y-10 animate-in fade-in slide-in-from-left-12 duration-1000">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white shadow-2xl shadow-primary/30 animate-float">
+              <Terminal size={32} strokeWidth={2.5} />
             </div>
             <div>
-              <p className="text-2xl font-black tracking-tighter font-heading italic">Things<span className="text-white/80 not-italic font-medium">NXT</span></p>
-              <p className="text-[10px] text-white/60 font-black tracking-[0.3em] uppercase">
-                Enterprise Terminal
-              </p>
+              <h1 className="text-4xl font-black tracking-tighter text-foreground italic">
+                Things<span className="text-primary not-italic">NXT</span>
+              </h1>
+              <p className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">Infrastructure OS</p>
             </div>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl xl:text-[3.25rem] font-black font-heading tracking-tighter leading-[1.05] text-white italic">
-            Command your <span className="text-white/80 not-italic">IoT Ecosystem.</span>
-          </h1>
-          <p className="mt-8 text-lg text-white/70 leading-relaxed max-w-md font-medium">
-            Unified orchestration for devices, identities, and mission-critical platform parameters.
-          </p>
-
-          <ul className="mt-16 space-y-6 hidden sm:block">
-            {[
-              { icon: Activity, text: "Real-time telemetry and mission overview" },
-              { icon: Radio, text: "MQTT infrastructure and pulse monitoring" },
-              { icon: ShieldCheck, text: "Granular access control and audit registries" },
-            ].map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-5 text-base text-white/85 font-semibold tracking-tight group">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/20 group-hover:scale-105">
-                  <Icon className="h-5 w-5" strokeWidth={2.5} />
-                </span>
-                {text}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="relative z-10 flex items-center justify-between border-t border-white/10 pt-8 mt-12">
-            <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest">
-              © {new Date().getFullYear()} ThingsNXT · Platform Authorization Required
-            </p>
-        </div>
-      </aside>
-
-      <main className="relative flex-1 flex flex-col justify-center px-6 py-16 sm:px-12 lg:px-16 xl:px-24 bg-[hsl(210_25%_98%)] dark:bg-[hsl(222_47%_6%)] min-h-[70vh] lg:min-h-screen">
-        <div className="w-full max-w-[460px] mx-auto">
-          <div className="mb-12 lg:mb-14 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 mb-6 mx-auto lg:mx-0">
-               <ShieldCheck size={14} className="animate-pulse" />
-               <span className="text-[10px] font-black uppercase tracking-[0.14em]">Secure Auth Portal</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-black font-heading text-default-900 dark:text-default-50 tracking-tighter italic">
-              Terminal<span className="text-primary not-italic">_Access</span>
+          <div className="space-y-6">
+            <h2 className="text-6xl font-black leading-[1.05] tracking-tighter text-foreground italic">
+              Universal <br />
+              <span className="text-gradient not-italic">Mesh Control.</span>
             </h2>
-            <p className="mt-4 text-[15px] text-default-500 dark:text-default-400 font-medium leading-relaxed">
-              Identify yourself to initialize the administrative environment. <br className="hidden sm:block"/> Sessions are cryptographically logged for audit.
+            <p className="text-xl text-muted-foreground leading-relaxed max-w-md font-medium">
+              The neural center for your entire IoT infrastructure. Secure, deterministic, and exponentially faster.
             </p>
           </div>
 
-          <Card
-            shadow="none"
-            classNames={{
-              base:
-                "border-none bg-content1/70 dark:bg-content1/40 backdrop-blur-2xl " +
-                "shadow-[0_32px_128px_-12px_rgba(0,0,0,0.12)] dark:shadow-[0_32px_128px_-12px_rgba(0,0,0,0.6)] " +
-                "rounded-[2.5rem] overflow-hidden p-2",
-              body: "p-8 sm:p-10 gap-0",
-            }}
-          >
-            <CardBody>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-                <Input
-                  label="Identity"
-                  labelPlacement="outside"
-                  placeholder="Username or email"
-                  type="text"
-                  autoComplete="username"
-                  variant="flat"
-                  radius="2xl"
-                  size="lg"
-                  value={username}
-                  onValueChange={setUsername}
-                  startContent={
-                    <div className="p-2 rounded-xl bg-default-200/50 dark:bg-default-100/10 mr-1">
-                        <UserIcon
-                          className="text-primary w-4 h-4 shrink-0 pointer-events-none"
-                          strokeWidth={3}
-                        />
-                    </div>
-                  }
-                  classNames={{
-                      ...fieldClassNames,
-                      inputWrapper: "h-16 px-5 bg-default-100/40 dark:bg-default-100/10 border-2 border-divider/50 data-[hover=true]:border-primary/50 focus-within:!border-primary rounded-[1.25rem] transition-all",
-                      label: "font-black uppercase text-[10px] tracking-widest text-default-400 mb-2 ml-1",
-                      input: "text-base font-bold tracking-tight"
-                  }}
-                  isRequired
-                />
+          <div className="grid grid-cols-2 gap-6 mt-4">
+            {[
+              { icon: ShieldCheck, title: "Quantum-Safe", desc: "Military grade crypto" },
+              { icon: Globe, title: "Edge Mesh", desc: "Global distributed sync" },
+              { icon: Zap, title: "Zero Latency", desc: "Sub-ms execution" },
+              { icon: Activity, title: "Live Insights", desc: "Real-time telemetry" },
+            ].map((feature, i) => (
+              <div key={i} className="flex gap-4 p-5 rounded-[2rem] bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all duration-500 group">
+                <div className="h-12 w-12 shrink-0 rounded-2xl bg-background border border-border flex items-center justify-center text-primary shadow-sm group-hover:scale-110 transition-transform">
+                  <feature.icon size={22} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground text-sm tracking-tight">{feature.title}</h3>
+                  <p className="text-xs text-muted-foreground font-medium">{feature.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-                <div className="flex flex-col gap-1.5">
+        {/* Right Side: Login Form */}
+        <div className="flex justify-center animate-in fade-in slide-in-from-right-12 duration-1000">
+          <div className="w-full max-w-[460px] relative">
+            {/* Form Glow Effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-blue-500/20 rounded-[3rem] blur-2xl opacity-50" />
+            
+            <Card className="glass-card border-none rounded-[3rem] overflow-hidden shadow-[0_32px_128px_-12px_rgba(0,0,0,0.2)]">
+              <CardBody className="p-10 sm:p-12">
+                <div className="lg:hidden flex justify-center mb-10">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg">
+                      <Terminal size={24} />
+                    </div>
+                    <span className="text-3xl font-black text-foreground tracking-tight italic">ThingsNXT</span>
+                  </div>
+                </div>
+
+                <div className="mb-10 text-center lg:text-left">
+                  <h1 className="text-3xl font-black text-foreground mb-3 tracking-tight italic">Terminal<span className="text-primary not-italic">_Init</span></h1>
+                  <p className="text-muted-foreground font-semibold text-[15px]">Establish primitive authorization to access the workspace.</p>
+                </div>
+
+                {error && (
+                  <div className="mb-8 p-5 rounded-[1.5rem] bg-danger/10 border border-danger/20 flex gap-4 items-center animate-in slide-in-from-top-2">
+                    <div className="h-10 w-10 shrink-0 rounded-xl bg-danger/10 flex items-center justify-center">
+                      <ShieldAlert className="text-danger" size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-danger uppercase tracking-widest mb-0.5">Access Denied</h4>
+                      <p className="text-[13px] text-danger/90 font-bold leading-tight">{error}</p>
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <Input
-                    label="Authentication"
+                    isRequired
+                    label="Primitive Identity"
                     labelPlacement="outside"
-                    placeholder="Private access key"
-                    type={showPassword ? "text" : "password"}
+                    placeholder="Admin ID or Email"
+                    type="text"
+                    variant="bordered"
+                    autoComplete="username"
+                    value={identifier}
+                    onValueChange={setIdentifier}
+                    startContent={<UserIcon className="text-muted-foreground mb-0.5" size={20} />}
+                    isInvalid={!!error}
+                    classNames={{
+                      label: "font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground mb-2 ml-1",
+                      input: "font-bold text-base",
+                      inputWrapper: "h-[4.5rem] px-6 border-2 hover:border-primary/50 focus-within:!border-primary rounded-2xl transition-all duration-300",
+                    }}
+                  />
+
+                  <Input
+                    isRequired
+                    label="Quantum Security Key"
+                    labelPlacement="outside"
+                    placeholder="••••••••••••"
+                    type={isVisible ? "text" : "password"}
+                    variant="bordered"
                     autoComplete="current-password"
-                    variant="flat"
-                    radius="2xl"
-                    size="lg"
                     value={password}
                     onValueChange={setPassword}
-                    startContent={
-                      <div className="p-2 rounded-xl bg-default-200/50 dark:bg-default-100/10 mr-1">
-                          <Lock
-                            className="text-primary w-4 h-4 shrink-0 pointer-events-none"
-                            strokeWidth={3}
-                          />
-                      </div>
-                    }
+                    startContent={<Lock className="text-muted-foreground mb-0.5" size={20} />}
+                    isInvalid={!!error}
+                    errorMessage={error}
                     endContent={
-                      <button
-                        type="button"
-                        className="flex items-center justify-center p-2.5 rounded-xl text-default-400 hover:text-primary hover:bg-primary/10 outline-none transition-colors"
-                        onClick={() => setShowPassword((v) => !v)}
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5" strokeWidth={2.5} />
+                      <button className="focus:outline-none p-2 rounded-xl hover:bg-muted transition-colors" type="button" onClick={toggleVisibility}>
+                        {isVisible ? (
+                          <EyeOff className="text-muted-foreground" size={20} />
                         ) : (
-                          <Eye className="w-5 h-5" strokeWidth={2.5} />
+                          <Eye className="text-muted-foreground" size={20} />
                         )}
                       </button>
                     }
                     classNames={{
-                        ...fieldClassNames,
-                        inputWrapper: "h-16 px-5 bg-default-100/40 dark:bg-default-100/10 border-2 border-divider/50 data-[hover=true]:border-primary/50 focus-within:!border-primary rounded-[1.25rem] transition-all",
-                        label: "font-black uppercase text-[10px] tracking-widest text-default-400 mb-2 ml-1",
-                        input: "text-base font-bold tracking-tight"
+                      label: "font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground mb-2 ml-1",
+                      input: "font-bold text-base",
+                      inputWrapper: "h-[4.5rem] px-6 border-2 hover:border-primary/50 focus-within:!border-primary rounded-2xl transition-all duration-300",
                     }}
-                    isRequired
                   />
-                  <div className="flex items-center justify-between px-2 py-1">
-                    <Checkbox
-                      size="sm"
-                      radius="md"
-                      isSelected={remember}
-                      onValueChange={setRemember}
+
+                  <div className="flex items-center justify-between pb-2 px-1">
+                    <Checkbox 
+                      size="sm" 
                       classNames={{
-                        base: "m-0 items-center gap-2",
-                        label: "text-[10px] text-default-600 dark:text-default-400 font-black uppercase tracking-[0.1em]",
+                        label: "text-[11px] font-black uppercase tracking-widest text-muted-foreground",
+                        wrapper: "rounded-lg border-2",
                       }}
                     >
-                      Remember session
+                      Persistent
                     </Checkbox>
-                    <Link
-                      href="#"
-                      className="text-[10px] text-primary font-black uppercase tracking-widest hover:opacity-80 transition-opacity"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      Recovery Protocol
+                    <Link href="#" className="text-[11px] font-black uppercase tracking-widest text-primary hover:opacity-70 transition-opacity">
+                      Recovery_01
                     </Link>
                   </div>
-                </div>
 
-                {error ? (
-                  <div
-                    className="rounded-[1.5rem] border-2 border-danger/20 bg-danger/5 px-5 py-4 flex gap-4 items-center animate-in fade-in slide-in-from-top-2"
-                    role="alert"
+                  <Button
+                    fullWidth
+                    color="primary"
+                    size="lg"
+                    type="submit"
+                    isLoading={isSubmitting}
+                    className="h-[4.5rem] font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                    endContent={!isSubmitting && <ArrowRight size={20} strokeWidth={3} />}
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-danger/10">
-                      <ShieldAlert className="h-5 w-5 text-danger" strokeWidth={2.5} />
-                    </div>
-                    <p className="text-sm text-danger font-bold leading-tight">
-                      {error}
-                    </p>
+                    Authorize Session
+                  </Button>
+                </form>
+
+                <div className="mt-12 flex items-center gap-6">
+                  <Divider className="flex-1 opacity-50" />
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Live Secure Mode</span>
                   </div>
-                ) : null}
-
-                <Button
-                  type="submit"
-                  color="primary"
-                  size="lg"
-                  radius="2xl"
-                  className="w-full h-16 text-sm font-black uppercase tracking-[0.2em] rounded-[1.25rem] shadow-2xl shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all"
-                  startContent={
-                    !loading ? <ShieldCheck className="h-5 w-5" strokeWidth={3} /> : undefined
-                  }
-                  endContent={
-                    !loading ? <ArrowRight className="h-5 w-5" strokeWidth={3} /> : undefined
-                  }
-                  isLoading={loading}
-                >
-                  {loading ? "Authorizing..." : "Authorize Access"}
-                </Button>
-              </form>
-            </CardBody>
-          </Card>
-
-          <div className="mt-10 p-5 rounded-2xl bg-default-100/50 dark:bg-default-100/5 border border-divider/40 text-center flex items-center justify-center gap-4 group">
-            <Activity size={16} className="text-primary group-hover:scale-125 transition-transform" />
-            <p className="text-[10px] font-black text-default-400 uppercase tracking-[0.3em]">
-              API_UPLINK: <span className="text-primary font-mono tracking-normal ml-2">AUTHENTICATED_SECURE_CHANNEL</span>
-            </p>
+                  <Divider className="flex-1 opacity-50" />
+                </div>
+              </CardBody>
+            </Card>
+            
+            {/* Version Badge */}
+            <div className="mt-8 text-center">
+              <p className="text-[10px] text-muted-foreground/50 font-black uppercase tracking-[0.4em]">
+                &copy; 2024 ThingsNXT Architecture · v2.4.0-Stable
+              </p>
+            </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
